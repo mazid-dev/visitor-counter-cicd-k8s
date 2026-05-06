@@ -1,4 +1,5 @@
-name: CI/CD Pipeline
+name: CI Pipeline
+
 on:
   push:
     branches: [ main ]
@@ -7,10 +8,11 @@ env:
   DOCKER_IMAGE: mazidhossain/visitor-counter
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -26,19 +28,3 @@ jobs:
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
             ${{ env.DOCKER_IMAGE }}:latest
-
-      - name: Set up kubeconfig (Minikube)
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
-
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-
-      - name: Update Helm values with new image tag
-        run: |
-          sed -i "s|tag:.*|tag: ${{ github.sha }}|g" visitor-chart/values.yaml
-
-      - name: Deploy with Helm
-        run: |
-          helm upgrade --install my-visitor ./visitor-chart
